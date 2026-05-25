@@ -12,14 +12,14 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1e1e1e;
         }
         .player-card {
-            background: white;
+            background: #2d2d2d;
             border-radius: 20px;
             padding: 30px;
             text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             width: 350px;
         }
         .cover {
@@ -28,18 +28,30 @@
             border-radius: 15px;
             object-fit: cover;
             margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         audio {
             width: 100%;
             margin: 20px 0;
         }
+        /* Стилизация самого плеера (для Chrome/Safari) */
+        audio::-webkit-media-controls-panel {
+            background-color: #3a3a3a;
+        }
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display {
+            color: #e0e0e0;
+        }
+        audio::-webkit-media-controls-play-button {
+            background-color: #555;
+            border-radius: 50%;
+        }
         h2 {
-            color: #333;
+            color: #e0e0e0;
             margin-bottom: 10px;
         }
         p {
-            color: #666;
+            color: #999;
             margin-top: 0;
         }
     </style>
