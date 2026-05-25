@@ -22,6 +22,14 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             width: 350px;
         }
+        .cover {
+            width: 200px;
+            height: 200px;
+            border-radius: 15px;
+            object-fit: cover;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
         audio {
             width: 100%;
             margin: 20px 0;
@@ -38,7 +46,11 @@
 </head>
 <body>
     <div class="player-card">
+        <!-- КАРТИНКА -->
+        <img class="cover" src="image.png" alt="Обложка трека">
+        
         <h2>🎵 Listen to the audio</h2>
+        
         <audio controls>
             <source src="050_SO3_A1_SB_3B_Audio_3_03.mp3" type="audio/mpeg">
             Ваш браузер не поддерживает аудиоплеер
