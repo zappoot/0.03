@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🏨 Hotel Chat · booking + price</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #0e2a1a;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .chat-container {
+            max-width: 550px;
+            width: 100%;
+            background: #e5ddd5;
+            border-radius: 36px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            height: 92vh;
+            max-height: 720px;
+            border: 1px solid #b3a392;
+        }
+        .chat-header {
+            background: #075e54;
+            padding: 12px 16px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .chat-header .avatar { background: #128c7e; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+        .chat-header .info .name { font-weight: 700; font-size: 1.2rem; }
+        .chat-header .info .status { font-size: 0.7rem; opacity: 0.8; }
+        .chat-messages {
+            flex: 1;
+            padding: 14px 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #e5ddd5;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23e5ddd5"/><circle cx="10" cy="10" r="2" fill="%23c4b8a8"/><circle cx="30" cy="20" r="2" fill="%23c4b8a8"/><circle cx="50" cy="10" r="2" fill="%23c4b8a8"/><circle cx="70" cy="25" r="2" fill="%23c4b8a8"/><circle cx="90" cy="15" r="2" fill="%23c4b8a8"/></svg>');
+            background-repeat: repeat;
+        }
+        .message {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        .message-guest { align-self: flex-end; background: #dcf8c6; border-bottom-right-radius: 4px; }
+        .message-reception { align-self: flex-start; background: white; border-bottom-left-radius: 4px; }
+        .message-correction { align-self: flex-start; background: #fff3cd; border-left: 4px solid #ffc107; border-bottom-left-radius: 4px; font-style: italic; }
+        .message-time { font-size: 0.55rem; opacity: 0.6; margin-top: 2px; text-align: right; }
+        .typing-indicator {
+            align-self: flex-start;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            font-size: 0.85rem;
+            color: #555;
+            display: none;
+        }
+        .typing-indicator span { animation: blink 1.2s infinite; display: inline-block; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0%,60%,100%{opacity:1;} 30%{opacity:0.3;} }
+        .chat-input {
+            background: #f0eeed;
+            padding: 10px 14px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #ccc;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 24px;
+            outline: none;
+            font-size: 0.95rem;
+            background: white;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .chat-input button {
+            background: #075e54;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .chat-input button:active { transform: scale(0.96); }
+        .chat-input button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .footer { text-align: center; font-size: 0.55rem; color: #8f7f6a; padding: 4px; background: #f0eeed; flex-shrink: 0; }
+        @media (max-width: 500px) {
+            .chat-container { height: 96vh; max-height: none; border-radius: 28px; }
+            .chat-header .info .name { font-size: 1rem; }
+            .message { font-size: 0.9rem; padding: 8px 12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container" id="app">
+    <div class="chat-header">
+        <div class="avatar">🏨</div>
+        <div class="info">
+            <div class="name">🏨 Reception</div>
+            <div class="status">✧ online · booking + price</div>
+        </div>
+    </div>
+    <div class="chat-messages" id="messagesContainer">
+        <div class="message message-reception">
+            Hello! Welcome to our hotel. 🌟<br> How can I help you today?
+            <div class="message-time">10:00</div>
+        </div>
+    </div>
+    <div class="typing-indicator" id="typingIndicator">
+        <span>●</span><span>●</span><span>●</span> receptionist is typing...
+    </div>
+    <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Type your message..." autofocus>
+        <button id="sendBtn">➤ Send</button>
+    </div>
+    <div class="footer">✧ try: "I want to book" or "What services do you offer?"</div>
+</div>
+
+<script>
+    (function() {
+        const inputField = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const typingIndicator = document.getElementById('typingIndicator');
+        let isProcessing = false;
+        let isEnded = false;  // флаг, что диалог закончен
+
+        let booking = {
+            step: 'initial',
+            dates: '',
+            roomType: '',
+            meal: 'no',
+            roomPricePerNight: 0,
+            mealPricePerNight: 0
+        };
+
+        const roomPrices = {
+            single: 80,
+            double: 120,
+            family: 180,
+            suite: 250
+        };
+
+        function getTime() {
+            const d = new Date();
+            return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+        }
+
+        function addMessage(text, sender, time, extraClass = '') {
+            const msg = document.createElement('div');
+            msg.className = `message message-${sender} ${extraClass}`;
+            msg.innerHTML = text + `<div class="message-time">${time || getTime()}</div>`;
+            messagesContainer.appendChild(msg);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTyping() {
+            if (isEnded) return;
+            typingIndicator.style.display = 'block';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+
+        function checkGrammar(text) {
+            const lower = text.toLowerCase().trim();
+            let corrections = [];
+            if (lower.includes('i dont have key') || lower.includes('i don\'t have key')) {
+                corrections.push('💡 Tip: say “I don’t have **a** key” or “I don’t have **my** key”.');
+            }
+            if (lower.includes('i am need')) {
+                corrections.push('💡 Tip: say “I need” (not “I am need”).');
+            }
+            if (lower.includes('i am can')) {
+                corrections.push('💡 Tip: say “I can” (not “I am can”).');
+            }
+            if (lower.includes('there is mold') && !lower.includes('in the')) {
+                corrections.push('💡 Tip: “There is mold **in the** shower.”');
+            }
+            if (lower.includes('the room is dust') && !lower.includes('dusty')) {
+                corrections.push('💡 Tip: say “The room is **dusty**.”');
+            }
+            if (lower.includes('i have not') && !lower.includes('haven\'t')) {
+                corrections.push('💡 Tip: use “I **haven’t**” or “I **don’t have**”.');
+            }
+            return corrections;
+        }
+
+        function calculatePrice() {
+            let roomPrice = booking.roomPricePerNight;
+            let mealPrice = booking.meal === 'yes' ? 25 : 0;
+            return roomPrice + mealPrice;
+        }
+
+        function getReceptionReply(userText) {
+            const lower = userText.toLowerCase().trim();
+
+            // --- FAREWELL (завершение диалога) ---
+            if (isEnded) {
+                return "We're already looking forward to your stay! 🌟 See you soon at the reception!";
+            }
+
+            // --- PROSHANIE (завершаем диалог) ---
+            if (lower.includes('no thanks') || lower.includes('no, thanks') || lower.includes('no thank') || lower.includes('bye') || lower.includes('goodbye') || lower.includes('see you') || (lower.includes('no') && lower.includes('thank'))) {
+                if (booking.step === 'done') {
+                    isEnded = true;
+                    return "You're very welcome! 🌟 We're looking forward to your stay! If you need anything, just let us know. Have a great day! 👋";
+                } else {
+                    return "Okay! If you change your mind, we're here to help. Have a nice day! 👋";
+                }
+            }
+
+            // --- SERVICES ---
+            if (lower.includes('service') || lower.includes('facilities') || lower.includes('offer') || lower.includes('amenities') || lower.includes('what do you have')) {
+                return "We offer a wide range of services and facilities:\n• Free high‑speed Wi‑Fi\n• Swimming pool & fitness centre\n• Spa & wellness centre\n• 24‑hour reception\n• Restaurant & bar\n• Airport shuttle (extra)\n• Laundry service\n• Tour desk & concierge\n• Free parking\n\nIs there anything specific you'd like to know about?";
+            }
+
+            // --- AMENITIES ---
+            if (lower.includes('pool') || lower.includes('gym') || lower.includes('wi-fi') || lower.includes('wifi')) {
+                return "We have a swimming pool 🏊‍♂️, a modern gym, free high‑speed Wi‑Fi, and a relaxing spa. All are included in your stay.";
+            }
+
+            // --- BOOKING ---
+            if (lower.includes('book') || lower.includes('reservation') || lower.includes('booking') || lower.includes('stay')) {
+                booking.step = 'dates';
+                return "Of course! I'd be happy to help you book a room. 🏨 **What dates are you planning to stay?** Please tell me the check‑in and check‑out dates.";
+            }
+
+            // --- DATES ---
+            if (booking.step === 'dates' && (lower.match(/\d+/) || lower.includes('june') || lower.includes('july') || lower.includes('august') || lower.includes('may') || lower.includes('september'))) {
+                booking.dates = userText.trim();
+                booking.step = 'room';
+                return "Great! I've noted your dates. Now, **what type of room would you prefer?** We offer single, double, family rooms, and suites. Also, would you like to add lunch and dinner? It's £25 extra per day.";
+            }
+
+            // --- ROOM TYPE ---
+            if (booking.step === 'room' && (lower.includes('single') || lower.includes('double') || lower.includes('family') || lower.includes('suite') || lower.includes('twin') || lower.includes('room'))) {
+                const roomKey = Object.keys(roomPrices).find(k => lower.includes(k));
+                if (roomKey) {
+                    booking.roomType = roomKey;
+                    booking.roomPricePerNight = roomPrices[roomKey];
+                } else {
+                    booking.roomType = lower.includes('double') ? 'double' : 'single';
+                    booking.roomPricePerNight = roomPrices[booking.roomType];
+                }
+                booking.step = 'meal';
+                return `Excellent choice! 🛏️ The ${booking.roomType} room costs £${booking.roomPricePerNight} per night. Would you also like to add lunch and dinner? It's £25 extra per day. Please answer **yes** or **no**.`;
+            }
+
+            // --- MEAL ---
+            if (booking.step === 'meal' && (lower.includes('yes') || lower.includes('no') || lower.includes('lunch') || lower.includes('dinner'))) {
+                booking.meal = lower.includes('yes') ? 'yes' : 'no';
+                booking.step = 'confirm';
+                const totalPrice = calculatePrice();
+                return `📋 Here's your booking summary:
+                        📅 Dates: ${booking.dates}
+                        🛏️ Room: ${booking.roomType} — £${booking.roomPricePerNight}/night
+                        🍽️ Meals: ${booking.meal === 'yes' ? '✅ included (+£25/day)' : '❌ not included'}
+                        💰 Total per night: £${totalPrice}
+                        Please confirm by saying **'Yes, everything is correct'** or tell me what to change.`;
+            }
+
+            // --- CONFIRMATION ---
+            if (booking.step === 'confirm' && (lower.includes('yes') || lower.includes('correct') || lower.includes('confirm') || lower.includes('everything') || lower.includes('ok'))) {
+                booking.step = 'done';
+                const totalPrice = calculatePrice();
+                return `🎉 Thank you! Your booking is confirmed. ✅
+                        📅 ${booking.dates}
+                        🛏️ ${booking.roomType} — £${booking.roomPricePerNight}/night
+                        🍽️ ${booking.meal === 'yes' ? 'with meals' : 'without meals'}
+                        💰 Total: £${totalPrice} per night
+                        You'll receive a confirmation email shortly. Is there anything else I can help you with? 😊`;
+            }
+
+            // --- KEY ---
+            if (lower.includes('key') || lower.includes('card') || lower.includes('lost')) {
+                return "Oh, I see! Don't worry — we'll give you a new room key. Please come to the reception with your ID.";
+            }
+
+            // --- CLEANING ---
+            if (lower.includes('mold') || lower.includes('shower') || lower.includes('clean') || lower.includes('dirty') || lower.includes('dusty')) {
+                return "I'm sorry about that! I'll send housekeeping to your room right away. Would you like to change rooms?";
+            }
+
+            // --- BILL ---
+            if (lower.includes('bill') || lower.includes('price') || lower.includes('extra') || lower.includes('payment')) {
+                return "I understand. Let me check your bill again. Could you please come to the reception with your room number? You didn't use the minibar, **did you**?";
+            }
+
+            // --- NOISE ---
+            if (lower.includes('noise') || lower.includes('noisy') || lower.includes('loud')) {
+                return "I apologise for the noise. I'll speak to the guests in the next room immediately. Would you like to change rooms? We have a quiet room on the top floor.";
+            }
+
+            // --- CHECK OUT ---
+            if (lower.includes('check out') || lower.includes('checkout') || lower.includes('leave')) {
+                return "Check‑out is at 11 am. Would you like a late check‑out? I can arrange it for you if possible.";
+            }
+
+            // --- CANCELLATION ---
+            if (lower.includes('cancellation') || lower.includes('cancel') || lower.includes('change')) {
+                return "Our cancellation policy is flexible — you can cancel up to 48 hours before arrival for free.";
+            }
+
+            // --- BREAKFAST ---
+            if (lower.includes('breakfast') || lower.includes('restaurant')) {
+                return "Breakfast is served from 7 am to 10 am in our restaurant. It's included in your room price.";
+            }
+
+            // --- HELLO / THANK YOU ---
+            if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+                return "Hello again! How can I assist you today? 😊";
+            }
+            if (lower.includes('thank') || lower.includes('thanks')) {
+                if (booking.step === 'done') {
+                    return "You're very welcome! 🌟 If you need anything else, just let us know. Have a great day! 👋";
+                }
+                return "You're very welcome! 😊 Can I help you with anything else?";
+            }
+
+            // fallback
+            if (booking.step === 'dates') return "What dates are you planning to stay? Please tell me the check‑in and check‑out dates.";
+            if (booking.step === 'room') return "What type of room would you prefer? Single, double, family, or suite?";
+            if (booking.step === 'meal') return "Would you like to add lunch and dinner? It's £25 extra per day. Please answer **yes** or **no**.";
+            if (booking.step === 'confirm') return "Please confirm your booking by saying **'Yes, everything is correct'** or tell me what to change.";
+            if (booking.step === 'done') return "Your booking is confirmed! Is there anything else I can help you with? 😊";
+
+            return "Thank you for your message. I'm here to help. Could you give me more details about your question or problem? I'll do my best to assist you.";
+        }
+
+        function processUserInput(userText) {
+            if (isProcessing) return;
+            if (!userText.trim()) return;
+
+            isProcessing = true;
+            inputField.disabled = true;
+            sendBtn.disabled = true;
+
+            const text = userText.trim();
+            addMessage(text, 'guest');
+
+            const corrections = checkGrammar(text);
+            if (corrections.length > 0) {
+                setTimeout(() => {
+                    corrections.forEach(c => {
+                        addMessage(c, 'reception', getTime(), 'message-correction');
+                    });
+                }, 400);
+            }
+
+            showTyping();
+            const delay = 700 + Math.random() * 1300;
+            setTimeout(() => {
+                hideTyping();
+                const reply = getReceptionReply(text);
+                addMessage(reply, 'reception');
+                isProcessing = false;
+                inputField.disabled = false;
+                sendBtn.disabled = false;
+                if (!isEnded) {
+                    inputField.value = '';
+                    inputField.focus();
+                } else {
+                    inputField.placeholder = "✅ Chat ended. Refresh to start new.";
+                    inputField.disabled = true;
+                    sendBtn.disabled = true;
+                }
+            }, delay);
+        }
+
+        sendBtn.addEventListener('click', () => processUserInput(inputField.value));
+        inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                processUserInput(inputField.value);
+            }
+        });
+
+        inputField.focus();
+    })();
+</script>
+</body>
+</html>
